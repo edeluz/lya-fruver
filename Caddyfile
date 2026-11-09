@@ -10,12 +10,7 @@
 {$DOMAIN} {
 	encode zstd gzip
 
-	# TEMPORAL (fase 1): contraseña para el panel de administración mientras no exista
-	# el login propio (fase 3). El formulario de clientes sigue abierto.
-	@panel path /admin /admin.html /js/admin.js
-	basic_auth @panel {
-		{$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
-	}
+	# El panel lo protege el login propio de la app (server/auth.js), no Caddy.
 
 	header -Server
 

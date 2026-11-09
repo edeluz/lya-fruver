@@ -1,6 +1,17 @@
 'use strict';
 /* Panel de administración (admin.html). */
 
+/* Cerrar sesión: va primero para que funcione aunque otra parte del panel falle. */
+document.getElementById('btnCerrarSesion').addEventListener('click', async (e)=>{
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  btn.textContent = 'Cerrando…';
+  try{
+    await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+  }catch(err){ /* sin conexión: igual se va al login */ }
+  window.location.replace('login.html');
+});
+
 /* Navegación */
 document.querySelectorAll('.nav-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{

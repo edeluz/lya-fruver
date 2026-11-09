@@ -9,27 +9,32 @@ pone HTTPS automático.
 > **Estado: pasando a la fase 2.** Las páginas se sirven desde el servidor propio. Supabase
 > **ya se quitó**, pero la base de datos propia (**MySQL**) y su API todavía no existen: por
 > ahora el formulario de pedidos y el panel **no pueden leer ni guardar datos**. El login con
-> roles llega en la fase 3. Mientras tanto, el panel tiene una contraseña temporal en Caddy.
+> roles llega en la fase 3. Mientras tanto, el panel se protege con el ingreso propio de la app
+> (usuarios sintéticos, ver "Usuarios de prueba").
 
 ## Estructura
 
 ```
 public/              Lo que ve el navegador
-  index.html         Portada
+  login.html         Ingreso de administración (primera pantalla al abrir la app, "/")
+  index.html         Portada (enlaces al formulario y al panel)
   cliente.html       Formulario de pedidos (abierto, sin contraseña)
-  admin.html         Panel de administración (protegido con contraseña)
+  admin.html         Panel de administración (exige haber ingresado)
   js/common.js       Utilidades: HTML seguro (anti-XSS) y fechas
+  js/login.js        Lógica del ingreso
   js/cliente.js      Lógica del formulario
-  js/admin.js        Lógica del panel
+  js/admin.js        Lógica del panel (exige haber ingresado)
   css/fonts.css      Fuentes Poppins e Inter (servidas localmente)
   vendor/, fonts/    Librerías y fuentes copiadas por "npm run build" (no van en git)
-server/              Servidor Express (solo entrega las páginas por ahora)
+server/              Servidor Express
+  auth.js            Ingreso, sesiones y protección del panel
+  usuarios-prueba.js TEMPORAL: usuarios sintéticos para probar el ingreso
 scripts/
   setup-secrets.sh   Crea el archivo .env en el servidor (pide datos con entrada oculta)
   copy-vendor.js     Copia librerías y fuentes a public/
 test/                Pruebas automáticas
 caddy/Dockerfile     Caddy ejecutándose sin root
-Caddyfile            Configuración de HTTPS y de la contraseña del panel
+Caddyfile            Configuración de HTTPS
 Dockerfile           Imagen de la app (multi-etapa, usuario sin privilegios)
 docker-compose.yml   Une app + caddy
 tables.sql           Esquema que se usaba en Supabase (referencia para el esquema MySQL)
@@ -73,6 +78,25 @@ npm run audit     # revisa vulnerabilidades altas y críticas
 
 Las pruebas de navegador **no tocan los datos reales**: usan datos falsos. Las del formulario
 y el panel quedan saltadas ("pendiente: API con MySQL") hasta que exista la API.
+
+### Usuarios de prueba (ingreso)
+
+Al abrir http://localhost:3000 aparece el ingreso. Mientras no exista la tabla de usuarios en
+MySQL (fase 3), se puede entrar con estos usuarios **sintéticos** (inventados, dominio `.test`),
+definidos en `server/usuarios-prueba.js`:
+
+| Correo                    | Contraseña             | Resultado                     |
+|---------------------------|------------------------|-------------------------------|
+| `admin@lyafruver.test`    | `Admin-Prueba-2026`    | Entra al panel                |
+| `operario@lyafruver.test` | `Operario-Prueba-2026` | Entra al panel                |
+| `inactivo@lyafruver.test` | `Inactivo-Prueba-2026` | No entra (usuario desactivado) |
+
+- En tu computador siempre están activos. En el VPS (producción) están **apagados**, salvo que
+  `.env` tenga `USUARIOS_PRUEBA=si`. Como sus contraseñas son públicas, apágalos (bórralo o pon
+  `no`) cuando termines de probar.
+- Tras 5 intentos fallidos desde la misma IP, el ingreso se bloquea 15 minutos.
+- Las sesiones duran 8 horas y se guardan en memoria: al reiniciar el servidor hay que
+  volver a ingresar.
 
 ## Despliegue en el VPS (resumen)
 
@@ -138,8 +162,8 @@ La guía detallada se hace paso a paso, un comando a la vez. Orden general:
    que estuvo en los HTML. Hay que exportar los datos (para pasarlos a MySQL) y luego pausar
    o borrar el proyecto en Supabase.
 2. **La app no tiene datos** hasta que existan la base MySQL y la API del servidor (fase 2).
-3. La contraseña temporal del panel (Caddy) no limita los intentos fallidos. El login propio
-   de la fase 3 sí los limitará.
+3. El ingreso usa usuarios **sintéticos** (contraseñas públicas en este README) y sesiones en
+   memoria. Los usuarios reales, con roles, pasan a MySQL en la fase 3.
 4. La lista de clientes del formulario es pública, y un cliente nuevo con un nombre repetido
    queda unido al cliente existente (fases 2 y 3).
 5. Un pedido o una factura pueden quedar a medias si falla la conexión mientras se guardan

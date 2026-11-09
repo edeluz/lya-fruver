@@ -8,7 +8,7 @@ L&A Fruver: a produce business web app — a public customer order form (`client
 
 The project is mid-migration, organized in phases (see README "Riesgos pendientes"):
 - **Phase 1 (done):** Express serves static files; pages talked directly to Supabase. Supabase (`@supabase/supabase-js`, `supabase-client.js`, its CSP origin) has been **removed**.
-- **Phase 2 (in progress):** own **MySQL** database + server-side API with transactions (schema reference: `tables.sql`, written for Postgres/Supabase — must be translated). Until the API exists, `public/js/admin.js` and `cliente.js` still contain `sb.from(...)` calls that now throw (`sb` is undefined); these must be replaced with `fetch` calls to the new API. The admin panel is protected only by Caddy `basic_auth`.
+- **Phase 2 (in progress):** own **MySQL** database + server-side API with transactions (schema reference: `tables.sql`, written for Postgres/Supabase — must be translated). Until the API exists, `public/js/admin.js` and `cliente.js` still contain `sb.from(...)` calls that now throw (`sb` is undefined); these must be replaced with `fetch` calls to the new API. The admin panel is protected by the app's own login (`server/auth.js`); Caddy no longer has `basic_auth`.
 - **Phase 3:** own login with roles. Phase 5: backups.
 
 Code marked `TEMPORAL (fase 1)` is meant to be removed in a later phase.
@@ -35,6 +35,7 @@ Deploy: `docker compose up -d --build` on the VPS (app + caddy). Secrets in `.en
 ## Architecture
 
 - `server/app.js` exports `createApp()` (used by both `server/index.js` and tests, which listen on port 0). It sets a strict helmet CSP, serves `public/` with `extensions: ['html']`, `/healthz`, and a generic error handler that never leaks details.
+- `/` serves `public/login.html` (static `index: 'login.html'`). `server/auth.js` provides `/api/login`, `/api/sesion`, `/api/logout` (in-memory sessions, HttpOnly SameSite=Strict cookie `lya_sesion`, scrypt hashes, 5 failures/15 min per IP) and `protegerPanel`, which gates `/admin`, `/admin.html`, `/js/admin.js` (decoded + lowercased path) — redirect to `/login`, or 401 for the JS. Users come from `server/usuarios-prueba.js` (synthetic, `TEMPORAL`), enabled outside production or with `USUARIOS_PRUEBA=si`. New admin-only files must be added to `RUTAS_PROTEGIDAS`.
 - `server/config.js` holds non-secret config. CSP `connect-src` is `'self'` only, so the frontend may only call this same server.
 - Frontend is plain scripts (no bundler, no modules) loaded in order via `<script src>`: vendor libs → `js/common.js` → page script. Functions are shared as globals.
 - `.npmrc` sets `allow-remote=root`: npm 12 otherwise refuses `xlsx`, which is installed from a cdn.sheetjs.com tarball URL.
@@ -48,4 +49,5 @@ Deploy: `docker compose up -d --build` on the VPS (app + caddy). Secrets in `.en
 - Browser tests fail on any page error, console error, CSP violation, or `alert/confirm` dialog.
 - Dates: use `localDateKey` / `parseDateOnly` from `common.js` (local Colombia time); `new Date("YYYY-MM-DD")` parses as UTC and shifts the day. Browser tests emulate `America/Bogota`.
 - Never add `ports:` to internal services in `docker-compose.yml` (Docker bypasses `ufw`).
-- When adding a page/asset that must be password-protected in phase 1, also add its path to the `@panel` matcher in `Caddyfile`.
+- When adding an admin-only page/asset, add its path to `RUTAS_PROTEGIDAS` in `server/auth.js`.
+- In `public/js/admin.js`, the logout handler (`#btnCerrarSesion`) is registered first so it works even if later panel code throws.

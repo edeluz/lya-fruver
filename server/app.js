@@ -4,6 +4,7 @@ const path = require('node:path');
 const express = require('express');
 const helmet = require('helmet');
 const config = require('./config');
+const { crearRutasAuth, protegerPanel } = require('./auth');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
@@ -35,6 +36,8 @@ function buildSecurityHeaders() {
 // Las librerías y fuentes casi nunca cambian: se pueden guardar en caché una semana.
 // El resto (HTML, JS propio) se revisa en cada visita para que los cambios se vean de inmediato.
 function setCacheHeaders(res, filePath) {
+  // Las páginas privadas (panel) ya traen "no-store" desde protegerPanel: no se cambia.
+  if (res.getHeader('Cache-Control')) return;
   const relative = path.relative(PUBLIC_DIR, filePath).split(path.sep)[0];
   if (relative === 'vendor' || relative === 'fonts') {
     res.setHeader('Cache-Control', `public, max-age=${ONE_WEEK_SECONDS}`);
@@ -55,9 +58,15 @@ function createApp() {
     res.json({ status: 'ok' });
   });
 
+  app.use('/api', crearRutasAuth());
+
+  // El panel exige sesión: sin ella, la página manda al login y su JS responde 401.
+  app.use(protegerPanel);
+
+  // La primera pantalla al abrir la app ("/") es el login.
   app.use(express.static(PUBLIC_DIR, {
     extensions: ['html'],
-    index: 'index.html',
+    index: 'login.html',
     dotfiles: 'ignore',
     setHeaders: setCacheHeaders,
   }));

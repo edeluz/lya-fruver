@@ -26,6 +26,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
+      # TEMPORAL (fase 2): "si" activa los usuarios sintéticos del login (server/usuarios-prueba.js).
+      USUARIOS_PRUEBA: ${USUARIOS_PRUEBA:-no}
     # Sin "ports": la app solo es accesible desde Caddy, por la red interna de Docker.
     networks:
       - web
@@ -47,8 +49,6 @@ services:
     environment:
       DOMAIN: ${DOMAIN:?Falta DOMAIN en .env. Ejecuta scripts/setup-secrets.sh}
       ACME_EMAIL: ${ACME_EMAIL:?Falta ACME_EMAIL en .env. Ejecuta scripts/setup-secrets.sh}
-      ADMIN_USER: ${ADMIN_USER:?Falta ADMIN_USER en .env. Ejecuta scripts/setup-secrets.sh}
-      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?Falta ADMIN_PASSWORD_HASH en .env. Ejecuta scripts/setup-secrets.sh}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

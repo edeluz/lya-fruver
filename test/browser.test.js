@@ -95,7 +95,7 @@ async function assertNoXss(page) {
   assert.equal(result.injected, 0, 'se creó HTML inyectado');
 }
 
-test('portada: carga fuentes propias sin errores', { skip }, async () => {
+test('login (primera pantalla): carga fuentes propias sin errores', { skip }, async () => {
   const { page, problems } = await openPage('/');
   await page.evaluate(() => document.fonts.ready);
   const loaded = await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family));

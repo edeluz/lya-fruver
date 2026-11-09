@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Crea o actualiza el archivo .env del servidor.
-#  - Pide los datos en la terminal. La contraseña se escribe OCULTA (no se ve al teclear).
+#  - Pide los datos en la terminal.
 #  - Genera solos los secretos aleatorios (SESSION_SECRET y MYSQL_PASSWORD).
 #  - Guarda .env con permisos 600 (solo tu usuario puede leerlo).
 #  - Nunca muestra secretos en pantalla.
@@ -13,9 +13,7 @@ umask 077
 
 cd "$(dirname "$0")/.."
 ENV_FILE=".env"
-CADDY_IMAGE="caddy:2.10-alpine"
 DEFAULT_DOMAIN="pedidos.layfruver.com"
-MIN_PASSWORD_LENGTH=12
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
@@ -78,33 +76,6 @@ say "Presiona Enter para aceptar el valor entre corchetes."
 say ""
 ask DOMAIN     "Dominio de la app"                    "$DEFAULT_DOMAIN" '^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
 ask ACME_EMAIL "Correo para avisos del certificado"   "correo@ejemplo.com" '^[^@[:space:]]+@[^@[:space:]]+\.[A-Za-z]{2,}$'
-ask ADMIN_USER "Usuario para entrar al panel"         "admin" '^[A-Za-z0-9._-]{3,32}$'
-
-# ---------- Contraseña del panel (oculta) ----------
-change_password=yes
-if [ -n "$(get_value ADMIN_PASSWORD_HASH)" ]; then
-  read -rp "Ya hay una contraseña del panel. ¿Cambiarla? (s/N): " answer
-  [[ "$answer" =~ ^[sS]$ ]] || change_password=no
-fi
-
-if [ "$change_password" = yes ]; then
-  say "Elige la contraseña del panel (mínimo $MIN_PASSWORD_LENGTH caracteres). No se verá al escribir."
-  while true; do
-    read -rsp "Contraseña: " pw1; printf '\n'
-    read -rsp "Repítela:   " pw2; printf '\n'
-    if [ "$pw1" != "$pw2" ]; then say "  No coinciden, inténtalo de nuevo."; continue; fi
-    if [ "${#pw1}" -lt "$MIN_PASSWORD_LENGTH" ]; then say "  Muy corta, usa al menos $MIN_PASSWORD_LENGTH caracteres."; continue; fi
-    break
-  done
-  say "Cifrando la contraseña (la primera vez descarga Caddy, puede tardar un poco)..."
-  # La contraseña viaja por la entrada estándar: no queda en el historial ni en la lista de procesos.
-  hash=$(printf '%s\n' "$pw1" | docker run --rm -i "$CADDY_IMAGE" caddy hash-password 2>/dev/null) \
-    || fail "No se pudo cifrar la contraseña."
-  unset pw1 pw2
-  [[ "$hash" == \$2* ]] || fail "El cifrado no produjo un resultado válido."
-  set_value ADMIN_PASSWORD_HASH "$hash"
-  unset hash
-fi
 
 # ---------- Secretos generados automáticamente (solo si no existen) ----------
 for key in SESSION_SECRET MYSQL_PASSWORD; do
@@ -116,5 +87,5 @@ done
 chmod 600 "$ENV_FILE"
 say ""
 say "Listo. Archivo .env guardado con permisos 600 (solo tu usuario puede leerlo)."
-say "Datos configurados: DOMAIN, ACME_EMAIL, ADMIN_USER, ADMIN_PASSWORD_HASH, SESSION_SECRET, MYSQL_PASSWORD."
+say "Datos configurados: DOMAIN, ACME_EMAIL, SESSION_SECRET, MYSQL_PASSWORD."
 say "Por seguridad no se muestra ningún valor secreto."

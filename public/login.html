@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L&A Fruver — Ingresar</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23ffc800%22/><text x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22%232e7d32%22 font-family=%22sans-serif%22 font-weight=%22bold%22>L&A</text></svg>">
+<link rel="stylesheet" href="css/fonts.css">
+<style>
+  :root{
+    --verde:#1e7d32; --verde-oscuro:#145a24; --verde-claro:#e8f5e9;
+    --amarillo:#ffc800; --gris-texto:#3a3f3a; --gris-suave:#f4f6f4;
+    --borde:#d9e3d9; --rojo:#c0392b; --sombra:0 8px 28px rgba(20,90,36,0.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    color:var(--gris-texto);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,200,0,.22) 0, transparent 38%),
+      radial-gradient(circle at 92% 94%, rgba(30,125,50,.18) 0, transparent 42%),
+      var(--gris-suave);
+  }
+  .wrap{width:100%;max-width:400px;}
+  .back{
+    display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;
+    color:var(--verde-oscuro);font-size:13.5px;font-weight:600;text-decoration:none;
+  }
+  .back:hover{text-decoration:underline;}
+  .card{background:#fff;border-radius:20px;box-shadow:var(--sombra);padding:32px 28px 28px;}
+  .brand{text-align:center;margin-bottom:24px;}
+  .badge{
+    width:68px;height:68px;background:var(--amarillo);border-radius:18px;margin:0 auto 12px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;color:var(--verde-oscuro);
+  }
+  h1{font-family:'Poppins',sans-serif;font-size:21px;color:var(--verde-oscuro);}
+  .sub{font-size:13.5px;color:#6b756b;margin-top:4px;}
+  .field{margin-bottom:16px;}
+  label{display:block;font-size:13px;font-weight:700;color:var(--verde-oscuro);margin-bottom:6px;}
+  .input-wrap{position:relative;}
+  input{
+    width:100%;padding:14px 14px;border:1.5px solid var(--borde);border-radius:12px;
+    font-size:16px;font-family:inherit;color:var(--gris-texto);background:#fff;
+  }
+  input:focus{outline:none;border-color:var(--verde);box-shadow:0 0 0 3px rgba(30,125,50,.15);}
+  #password{padding-right:74px;}
+  .toggle{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--verde);font-weight:700;font-size:13px;
+    padding:8px 10px;cursor:pointer;border-radius:8px;
+  }
+  .toggle:hover{background:var(--verde-claro);}
+  .btn{
+    width:100%;margin-top:6px;padding:15px;border:none;border-radius:14px;
+    background:var(--verde);color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
+    box-shadow:0 4px 14px rgba(20,90,36,.18);
+  }
+  .btn:hover{background:var(--verde-oscuro);}
+  .btn:disabled{opacity:.65;cursor:not-allowed;}
+  .msg{display:none;margin-bottom:16px;padding:12px 14px;border-radius:10px;font-size:13.5px;font-weight:500;}
+  .msg.show{display:block;}
+  .msg.err{background:#fdecea;color:var(--rojo);border:1px solid #f3c6c1;}
+  .msg.ok{background:var(--verde-claro);color:var(--verde-oscuro);border:1px solid #b7dfb9;}
+  .foot{text-align:center;font-size:12px;color:#8a938a;margin-top:18px;}
+  :focus-visible{outline:3px solid var(--amarillo);outline-offset:2px;}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="index.html">← Volver al inicio</a>
+
+  <div class="card">
+    <div class="brand">
+      <div class="badge">L&A</div>
+      <h1>Ingreso de administración</h1>
+      <p class="sub">Solo para el personal de L&A Fruver</p>
+    </div>
+
+    <div id="msg" class="msg" role="alert"></div>
+
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" autocomplete="username" inputmode="email" placeholder="correo@ejemplo.com" required>
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <div class="input-wrap">
+          <input type="password" id="password" autocomplete="current-password" placeholder="Tu contraseña" required>
+          <button type="button" class="toggle" id="togglePass" aria-label="Mostrar u ocultar contraseña">Mostrar</button>
+        </div>
+      </div>
+      <button type="submit" class="btn" id="btnIngresar">Ingresar</button>
+    </form>
+
+    <div class="foot">L&A Fruver · Calidad y Servicio</div>
+  </div>
+</main>
+
+<script src="js/login.js"></script>
+</body>
+</html>
