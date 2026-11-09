@@ -1,0 +1,28 @@
+# Caddy: la "puerta de entrada". Recibe las visitas, pone HTTPS (candado) automático
+# con Let's Encrypt y pasa las peticiones a la app Node.
+# Los valores {$...} vienen del archivo .env (los crea scripts/setup-secrets.sh).
+{
+	email {$ACME_EMAIL}
+	# Desactiva la consola de administración interna de Caddy (no se necesita).
+	admin off
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# TEMPORAL (fase 1): contraseña para el panel de administración mientras no exista
+	# el login propio (fase 3). El formulario de clientes sigue abierto.
+	@panel path /admin /admin.html /js/admin.js
+	basic_auth @panel {
+		{$ADMIN_USER} {$ADMIN_PASSWORD_HASH}
+	}
+
+	header -Server
+
+	reverse_proxy app:3000
+
+	log {
+		output stdout
+		format console
+	}
+}

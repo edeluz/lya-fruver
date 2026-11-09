@@ -1,0 +1,5 @@
+# Los scripts y la configuración del servidor (Linux) deben tener finales de línea LF.
+*.sh       text eol=lf
+Caddyfile  text eol=lf
+Dockerfile text eol=lf
+*.yml      text eol=lf

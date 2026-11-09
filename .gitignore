@@ -1,24 +1,19 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
-
-# Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# dotenv environment variable files
+# Secretos: nunca en git
 .env
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
-# temp directory
-.temp
-.tmp
+# Dependencias y archivos generados (npm ci / npm run build)
+node_modules/
+public/vendor/
+public/fonts/
+
+# Copias de seguridad de la base de datos
+backups/
+
+# Paquete para subir al servidor
+lya-fruver.tgz
+
+*.log
+.DS_Store
+Thumbs.db

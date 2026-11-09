@@ -1,0 +1,64 @@
+# L&A Fruver: app (Node.js) + caddy (HTTPS).
+# La base de datos (MySQL) se agregará en la fase 2, sin puertos abiertos a internet.
+name: lya-fruver
+
+x-hardening: &hardening
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  app:
+    <<: *hardening
+    build: .
+    image: lya-fruver-app
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    # Sin "ports": la app solo es accesible desde Caddy, por la red interna de Docker.
+    networks:
+      - web
+
+  caddy:
+    <<: *hardening
+    build: ./caddy
+    image: lya-fruver-caddy
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    sysctls:
+      # Permite usar los puertos 80 y 443 sin ser root.
+      - net.ipv4.ip_unprivileged_port_start=0
+    environment:
+      DOMAIN: ${DOMAIN:?Falta DOMAIN en .env. Ejecuta scripts/setup-secrets.sh}
+      ACME_EMAIL: ${ACME_EMAIL:?Falta ACME_EMAIL en .env. Ejecuta scripts/setup-secrets.sh}
+      ADMIN_USER: ${ADMIN_USER:?Falta ADMIN_USER en .env. Ejecuta scripts/setup-secrets.sh}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?Falta ADMIN_PASSWORD_HASH en .env. Ejecuta scripts/setup-secrets.sh}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+networks:
+  web:
+
+volumes:
+  caddy_data:
+  caddy_config:

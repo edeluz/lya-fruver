@@ -1,0 +1,23 @@
+# Secretos: nunca dentro de la imagen
+.env
+.env.*
+!.env.example
+
+# Se generan o no hacen falta dentro de la imagen
+node_modules
+public/vendor
+public/fonts
+legacy
+backups
+test
+.git
+.gitignore
+.gitattributes
+.vscode
+*.md
+*.log
+Dockerfile
+docker-compose*.yml
+Caddyfile
+caddy
+scripts/setup-secrets.sh
