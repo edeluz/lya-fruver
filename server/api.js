@@ -2,19 +2,19 @@
 
 /* ============================================================
    L&A FRUVER - API de datos: aquí solo se juntan las rutas.
-   Cada unidad de negocio vive en su propio archivo en server/rutas/:
+   Cada unidad de negocio vive en su propio archivo en server/endpoints/:
      proveedores.js, productos.js, clientes.js, pedidos.js, facturas.js
-   Piezas compartidas: server/rutas/comun.js. Conexión: server/db.js.
+   Piezas compartidas: server/endpoints/comun.js. Conexión: server/db.js.
    ============================================================ */
 
 const express = require('express');
 const { baseConfigurada, obtenerPool, cerrarPool } = require('./db');
-const { ErrorApi, asincrono, requiereBase } = require('./rutas/comun');
-const { crearRutasProveedores } = require('./rutas/proveedores');
-const { crearRutasProductos } = require('./rutas/productos');
-const { crearRutasClientes } = require('./rutas/clientes');
-const { crearRutasPedidos } = require('./rutas/pedidos');
-const { crearRutasFacturas } = require('./rutas/facturas');
+const { ErrorApi, asincrono, requiereBase } = require('./endpoints/comun');
+const { crearRutasProveedores } = require('./endpoints/proveedores');
+const { crearRutasProductos } = require('./endpoints/productos');
+const { crearRutasClientes } = require('./endpoints/clientes');
+const { crearRutasPedidos } = require('./endpoints/pedidos');
+const { crearRutasFacturas } = require('./endpoints/facturas');
 
 /* ---------- Límite de peticiones por IP (en memoria): 300 por minuto ---------- */
 const VENTANA_MS = 60 * 1000;

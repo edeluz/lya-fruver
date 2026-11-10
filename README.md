@@ -7,7 +7,7 @@ Corre en un VPS propio (Hostinger, administrado con **Easypanel**): **Node.js + 
 las páginas y la API, y la base de datos es **MariaDB 11** (esquema `fruver_lya`).
 
 > **Estado: fase 2 en curso.** Supabase ya se quitó. La API propia contra MariaDB ya existe
-> (`server/api.js` y `server/rutas/`), pero las pantallas (`admin.js`, `cliente.js`) todavía
+> (`server/api.js` y `server/endpoints/`), pero las pantallas (`admin.js`, `cliente.js`) todavía
 > no la usan: hay que cambiarlas para que llamen a la API. El ingreso usa usuarios sintéticos
 > (ver "Usuarios de prueba") hasta la fase 3.
 
@@ -33,7 +33,7 @@ server/              Servidor Express
   usuarios-prueba.js TEMPORAL: usuarios sintéticos para probar el ingreso
   db.js              Conexión a MariaDB (mysql2) y transacciones
   api.js             Junta las rutas de la API, límite de peticiones y errores
-  rutas/             Un archivo por unidad de negocio
+  endpoints/         Un archivo por unidad de negocio
     comun.js         Piezas compartidas (validación, paginación, permisos, fechas)
     proveedores.js, productos.js, clientes.js, pedidos.js, facturas.js
 scripts/
@@ -140,7 +140,7 @@ definidos en `server/usuarios-prueba.js`:
 Todas las direcciones empiezan por `/api`, responden JSON y exigen haber ingresado. Las que
 escriben (POST, PUT, PATCH, DELETE) exigen además el rol `admin`. Las listas son paginadas:
 `?pagina=1&limite=50` (máximo 200) y responden `{ datos, total, pagina, limite }`. El detalle de
-cada filtro está al inicio de cada archivo en `server/rutas/`.
+cada filtro está al inicio de cada archivo en `server/endpoints/`.
 
 | Unidad | Direcciones | Qué hace "borrar" (DELETE) |
 |---|---|---|
