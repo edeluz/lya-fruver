@@ -1,0 +1,459 @@
+{
+  "info": {
+    "name": "L&A Fruver - API",
+    "description": "Backend de L&A Fruver (Express + MariaDB).\n\nCómo usarla:\n1. Elige el entorno (arriba a la derecha): 'L&A Fruver - Local' o 'L&A Fruver - Producción'.\n2. Autenticación (una de las dos):\n   a) Llave de API (sin login): en el entorno, escribe en 'apiToken' (Current value) el mismo valor de API_TOKEN del servidor. La colección ya usa Authorization > Bearer Token con {{apiToken}}.\n   b) Login: ejecuta '0. Sesión > Iniciar sesión'. Postman guarda la cookie y la envía sola.\n3. Usa las carpetas en orden: las peticiones 'Crear' guardan el id creado (proveedorId, productoId, clienteId, pedidoId, facturaId) y las siguientes lo usan.\n\nOJO: la base es la REAL. Los datos de prueba se crean con el nombre 'PRUEBA POSTMAN'. 'Borrar pedido' borra de verdad.\n\nRespuestas: siempre JSON. Errores: { error, detalles? }. Listas: { datos, total, pagina, limite }.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{apiToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "proveedorId", "value": "" },
+    { "key": "productoId", "value": "" },
+    { "key": "clienteId", "value": "" },
+    { "key": "pedidoId", "value": "" },
+    { "key": "facturaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Sesión",
+      "item": [
+        {
+          "name": "Estado de la base (health)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api", "health"] },
+            "description": "No necesita sesión. 200 = conectado a la base. 503 = sin configurar o sin conexión."
+          }
+        },
+        {
+          "name": "Iniciar sesión",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Sesión iniciada (200)', () => pm.response.to.have.status(200));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/login", "host": ["{{baseUrl}}"], "path": ["api", "login"] },
+            "description": "Crea la cookie 'lya_sesion' (dura 8 horas). Postman la guarda y la envía sola. Correo y contraseña salen de las variables del entorno 'email' y 'password'. 5 intentos fallidos bloquean 15 minutos."
+          }
+        },
+        {
+          "name": "Ver sesión actual",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/sesion", "host": ["{{baseUrl}}"], "path": ["api", "sesion"] },
+            "description": "Responde { usuario: { email, nombre, rol } } o { usuario: null } si no hay sesión."
+          }
+        },
+        {
+          "name": "Cerrar sesión",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/logout", "host": ["{{baseUrl}}"], "path": ["api", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Proveedores",
+      "item": [
+        {
+          "name": "Listar proveedores",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "const r = pm.response.json();",
+            "if (r.datos && r.datos.length && !pm.collectionVariables.get('proveedorId')) pm.collectionVariables.set('proveedorId', r.datos[0].id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/proveedores?pagina=1&limite=50",
+              "host": ["{{baseUrl}}"], "path": ["api", "proveedores"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "limite", "value": "50", "description": "Máximo 200" },
+                { "key": "q", "value": "", "description": "Buscar por nombre", "disabled": true },
+                { "key": "activo", "value": "si", "description": "si | no", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear proveedor",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Creado (201)', () => pm.response.to.have.status(201));",
+            "if (pm.response.code === 201) pm.collectionVariables.set('proveedorId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"PRUEBA POSTMAN Proveedor\",\n  \"telefono\": \"300 000 0000\",\n  \"direccion\": \"Calle 1 # 2-3\",\n  \"notas\": \"Creado desde Postman\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/proveedores", "host": ["{{baseUrl}}"], "path": ["api", "proveedores"] },
+            "description": "Rol admin. Obligatorio: nombre. 409 si el nombre ya existe."
+          }
+        },
+        {
+          "name": "Ver proveedor",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/proveedores/{{proveedorId}}", "host": ["{{baseUrl}}"], "path": ["api", "proveedores", "{{proveedorId}}"] }
+          }
+        },
+        {
+          "name": "Editar proveedor (todo)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"PRUEBA POSTMAN Proveedor editado\",\n  \"telefono\": \"311 111 1111\",\n  \"direccion\": null,\n  \"notas\": null,\n  \"activo\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/proveedores/{{proveedorId}}", "host": ["{{baseUrl}}"], "path": ["api", "proveedores", "{{proveedorId}}"] },
+            "description": "PUT reemplaza todo: lo que no envíes queda vacío."
+          }
+        },
+        {
+          "name": "Editar proveedor (algunos campos)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"telefono\": \"322 222 2222\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/proveedores/{{proveedorId}}", "host": ["{{baseUrl}}"], "path": ["api", "proveedores", "{{proveedorId}}"] },
+            "description": "PATCH cambia solo lo que envíes."
+          }
+        },
+        {
+          "name": "Inhabilitar proveedor",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/proveedores/{{proveedorId}}", "host": ["{{baseUrl}}"], "path": ["api", "proveedores", "{{proveedorId}}"] },
+            "description": "No borra: marca activo = false. Responde 204 (sin cuerpo). Para reactivar: PATCH { \"activo\": true }."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Productos",
+      "item": [
+        {
+          "name": "Listar productos",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "const r = pm.response.json();",
+            "if (r.datos && r.datos.length && !pm.collectionVariables.get('productoId')) pm.collectionVariables.set('productoId', r.datos[0].id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/productos?pagina=1&limite=50",
+              "host": ["{{baseUrl}}"], "path": ["api", "productos"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "limite", "value": "50" },
+                { "key": "q", "value": "", "description": "Buscar por nombre", "disabled": true },
+                { "key": "disponible", "value": "si", "description": "si | no", "disabled": true },
+                { "key": "proveedor_id", "value": "{{proveedorId}}", "description": "Solo los que surte ese proveedor", "disabled": true }
+              ]
+            },
+            "description": "Cada producto trae 'proveedores': [{ id, nombre }]."
+          }
+        },
+        {
+          "name": "Crear producto",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Creado (201)', () => pm.response.to.have.status(201));",
+            "if (pm.response.code === 201) pm.collectionVariables.set('productoId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"PRUEBA POSTMAN Producto\",\n  \"unidad\": \"kg\",\n  \"precio\": 4500,\n  \"disponible\": false,\n  \"proveedores\": [\"{{proveedorId}}\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/productos", "host": ["{{baseUrl}}"], "path": ["api", "productos"] },
+            "description": "Rol admin. Obligatorio: nombre. 'proveedores' es opcional (lista de ids). Se crea NO disponible para que no aparezca en el formulario de clientes."
+          }
+        },
+        {
+          "name": "Ver producto",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "productos", "{{productoId}}"] }
+          }
+        },
+        {
+          "name": "Editar producto (todo)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"PRUEBA POSTMAN Producto editado\",\n  \"unidad\": \"unidad\",\n  \"precio\": 5000,\n  \"disponible\": false\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "productos", "{{productoId}}"] },
+            "description": "Si incluyes 'proveedores', también se reemplaza esa lista."
+          }
+        },
+        {
+          "name": "Editar producto (algunos campos)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"precio\": 5200\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "productos", "{{productoId}}"] }
+          }
+        },
+        {
+          "name": "Cambiar proveedores del producto",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"proveedores\": [\"{{proveedorId}}\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/productos/{{productoId}}/proveedores", "host": ["{{baseUrl}}"], "path": ["api", "productos", "{{productoId}}", "proveedores"] },
+            "description": "Reemplaza la lista completa. Lista vacía [] = ningún proveedor."
+          }
+        },
+        {
+          "name": "Marcar producto como no disponible",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "productos", "{{productoId}}"] },
+            "description": "No borra: disponible = false. Responde 204."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Clientes",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "const r = pm.response.json();",
+            "if (r.datos && r.datos.length && !pm.collectionVariables.get('clienteId')) pm.collectionVariables.set('clienteId', r.datos[0].id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/clientes?pagina=1&limite=50",
+              "host": ["{{baseUrl}}"], "path": ["api", "clientes"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "limite", "value": "50" },
+                { "key": "q", "value": "", "disabled": true },
+                { "key": "activo", "value": "si", "description": "si | no", "disabled": true }
+              ]
+            },
+            "description": "Cada cliente trae 'total_pedidos'."
+          }
+        },
+        {
+          "name": "Crear cliente",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Creado (201)', () => pm.response.to.have.status(201));",
+            "if (pm.response.code === 201) pm.collectionVariables.set('clienteId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"PRUEBA POSTMAN Cliente\",\n  \"telefono\": \"300 123 4567\",\n  \"direccion\": \"Carrera 10 # 20-30\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/clientes", "host": ["{{baseUrl}}"], "path": ["api", "clientes"] },
+            "description": "Rol admin. Obligatorio: nombre (único). 409 si ya existe."
+          }
+        },
+        {
+          "name": "Ver cliente",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/clientes/{{clienteId}}", "host": ["{{baseUrl}}"], "path": ["api", "clientes", "{{clienteId}}"] }
+          }
+        },
+        {
+          "name": "Editar cliente (todo)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"PRUEBA POSTMAN Cliente editado\",\n  \"telefono\": \"300 765 4321\",\n  \"direccion\": null,\n  \"activo\": true\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/clientes/{{clienteId}}", "host": ["{{baseUrl}}"], "path": ["api", "clientes", "{{clienteId}}"] }
+          }
+        },
+        {
+          "name": "Editar cliente (algunos campos)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"direccion\": \"Calle 50 # 10-20\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/clientes/{{clienteId}}", "host": ["{{baseUrl}}"], "path": ["api", "clientes", "{{clienteId}}"] }
+          }
+        },
+        {
+          "name": "Inhabilitar cliente",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/clientes/{{clienteId}}", "host": ["{{baseUrl}}"], "path": ["api", "clientes", "{{clienteId}}"] },
+            "description": "No borra: activo = false. Responde 204."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Pedidos",
+      "item": [
+        {
+          "name": "Listar pedidos",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "const r = pm.response.json();",
+            "if (r.datos && r.datos.length && !pm.collectionVariables.get('pedidoId')) pm.collectionVariables.set('pedidoId', r.datos[0].id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/pedidos?pagina=1&limite=50",
+              "host": ["{{baseUrl}}"], "path": ["api", "pedidos"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "limite", "value": "50" },
+                { "key": "desde", "value": "2026-11-01", "description": "AAAA-MM-DD (día de Colombia)", "disabled": true },
+                { "key": "hasta", "value": "2026-11-30", "description": "AAAA-MM-DD (incluye todo ese día)", "disabled": true },
+                { "key": "cliente_id", "value": "{{clienteId}}", "disabled": true },
+                { "key": "origen", "value": "admin", "description": "cliente | admin", "disabled": true },
+                { "key": "q", "value": "", "description": "Nombre del cliente", "disabled": true }
+              ]
+            },
+            "description": "Del más nuevo al más viejo. Cada pedido trae sus 'items' y teléfono/dirección del cliente."
+          }
+        },
+        {
+          "name": "Crear pedido",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Creado (201)', () => pm.response.to.have.status(201));",
+            "if (pm.response.code === 201) pm.collectionVariables.set('pedidoId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cliente_id\": \"{{clienteId}}\",\n  \"comentario\": \"PRUEBA POSTMAN\",\n  \"items\": [\n    { \"producto_id\": \"{{productoId}}\", \"cantidad\": 2.5 },\n    { \"producto_nombre\": \"Producto escrito a mano\", \"cantidad\": 3, \"unidad\": \"unidad\", \"observacion\": \"bien maduro\" }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/pedidos", "host": ["{{baseUrl}}"], "path": ["api", "pedidos"] },
+            "description": "Con sesión. Encabezado + items en una transacción. Cliente: 'cliente_id' o 'cliente_nombre' (si el nombre no existe, se crea el cliente). Cada item: 'producto_id' (del catálogo: nombre y unidad se completan solos) o 'producto_nombre'."
+          }
+        },
+        {
+          "name": "Ver pedido",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/pedidos/{{pedidoId}}", "host": ["{{baseUrl}}"], "path": ["api", "pedidos", "{{pedidoId}}"] }
+          }
+        },
+        {
+          "name": "Reemplazar pedido (cliente, comentario e items)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cliente_id\": \"{{clienteId}}\",\n  \"comentario\": \"PRUEBA POSTMAN editado\",\n  \"items\": [\n    { \"producto_id\": \"{{productoId}}\", \"cantidad\": 4 }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/pedidos/{{pedidoId}}", "host": ["{{baseUrl}}"], "path": ["api", "pedidos", "{{pedidoId}}"] },
+            "description": "Rol admin. Los items anteriores se reemplazan por estos (transacción)."
+          }
+        },
+        {
+          "name": "Cambiar comentario o cliente del pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"comentario\": \"Entregar antes de las 10 am\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/pedidos/{{pedidoId}}", "host": ["{{baseUrl}}"], "path": ["api", "pedidos", "{{pedidoId}}"] },
+            "description": "Solo encabezado (cliente_id, cliente_nombre, comentario). Para cambiar productos usa PUT."
+          }
+        },
+        {
+          "name": "Borrar pedido (BORRA DE VERDAD)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/pedidos/{{pedidoId}}", "host": ["{{baseUrl}}"], "path": ["api", "pedidos", "{{pedidoId}}"] },
+            "description": "Rol admin. Borra el pedido y sus items. 409 si el pedido ya tiene factura. Revisa que {{pedidoId}} sea el pedido de prueba antes de enviarlo."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Facturas",
+      "item": [
+        {
+          "name": "Listar facturas",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "const r = pm.response.json();",
+            "if (r.datos && r.datos.length && !pm.collectionVariables.get('facturaId')) pm.collectionVariables.set('facturaId', r.datos[0].id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/facturas?pagina=1&limite=30",
+              "host": ["{{baseUrl}}"], "path": ["api", "facturas"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "limite", "value": "30" },
+                { "key": "desde", "value": "2026-11-01", "description": "AAAA-MM-DD", "disabled": true },
+                { "key": "hasta", "value": "2026-11-30", "description": "AAAA-MM-DD", "disabled": true },
+                { "key": "cliente_id", "value": "{{clienteId}}", "disabled": true },
+                { "key": "pedido_id", "value": "{{pedidoId}}", "disabled": true },
+                { "key": "numero", "value": "1", "disabled": true },
+                { "key": "q", "value": "", "description": "Nombre del cliente", "disabled": true }
+              ]
+            },
+            "description": "De la más nueva a la más vieja (por número). Cada factura trae sus 'items'."
+          }
+        },
+        {
+          "name": "Crear factura",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Creada (201)', () => pm.response.to.have.status(201));",
+            "if (pm.response.code === 201) pm.collectionVariables.set('facturaId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cliente_id\": \"{{clienteId}}\",\n  \"pedido_id\": \"{{pedidoId}}\",\n  \"flete\": 5000,\n  \"items\": [\n    { \"producto_nombre\": \"PRUEBA POSTMAN Producto\", \"cantidad\": 2.5, \"unidad\": \"kg\", \"precio_unitario\": 4500 },\n    { \"producto_nombre\": \"Producto escrito a mano\", \"cantidad\": 3, \"unidad\": \"unidad\", \"precio_unitario\": 1200 }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/facturas", "host": ["{{baseUrl}}"], "path": ["api", "facturas"] },
+            "description": "Rol admin. El servidor calcula subtotales y total (+ flete). 'fecha' opcional (AAAA-MM-DD; si no, hoy en Colombia). Con 'cliente_id', nombre/teléfono/dirección se copian del cliente. 'pedido_id' opcional."
+          }
+        },
+        {
+          "name": "Ver factura",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/facturas/{{facturaId}}", "host": ["{{baseUrl}}"], "path": ["api", "facturas", "{{facturaId}}"] }
+          }
+        },
+        {
+          "name": "Reemplazar factura (encabezado e items)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cliente_id\": \"{{clienteId}}\",\n  \"flete\": 0,\n  \"items\": [\n    { \"producto_nombre\": \"PRUEBA POSTMAN Producto\", \"cantidad\": 1, \"unidad\": \"kg\", \"precio_unitario\": 4500 }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/facturas/{{facturaId}}", "host": ["{{baseUrl}}"], "path": ["api", "facturas", "{{facturaId}}"] },
+            "description": "Conserva el número y la fecha de creación. Recalcula el total."
+          }
+        },
+        {
+          "name": "Cambiar datos de la factura",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"flete\": 8000,\n  \"fecha\": \"2026-11-10\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/facturas/{{facturaId}}", "host": ["{{baseUrl}}"], "path": ["api", "facturas", "{{facturaId}}"] },
+            "description": "Encabezado: fecha, flete, cliente_*, pedido_id. Si cambia el flete se recalcula el total."
+          }
+        },
+        {
+          "name": "Borrar factura (no permitido)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Las facturas no se borran (405)', () => pm.response.to.have.status(405));"
+          ] } }],
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/facturas/{{facturaId}}", "host": ["{{baseUrl}}"], "path": ["api", "facturas", "{{facturaId}}"] },
+            "description": "Siempre responde 405: las facturas no se borran."
+          }
+        }
+      ]
+    }
+  ]
+}

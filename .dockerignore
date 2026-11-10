@@ -10,6 +10,7 @@ public/fonts
 legacy
 backups
 test
+postman
 .git
 .gitignore
 .gitattributes

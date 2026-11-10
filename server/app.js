@@ -59,9 +59,10 @@ function createApp() {
     res.json({ status: 'ok' });
   });
 
-  // API de datos (server/api.js) y login (server/auth.js).
-  app.use('/api', crearRutasApi());
+  // Backend: login (server/auth.js) y API de datos (server/api.js). Todo /api responde JSON;
+  // la API va de última porque responde 404 en JSON a cualquier dirección /api desconocida.
   app.use('/api', crearRutasAuth());
+  app.use('/api', crearRutasApi());
 
   // El panel exige sesión: sin ella, la página manda al login y su JS responde 401.
   app.use(protegerPanel);
@@ -83,7 +84,11 @@ function createApp() {
   app.use((err, req, res, next) => {
     console.error(`[error] ${req.method} ${req.path}:`, err);
     const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
-    res.status(status).type('text/plain').send(status === 500 ? 'Error interno del servidor' : 'Solicitud no válida');
+    // En el backend (/api) el error también va en JSON, para Postman y para el panel.
+    if (req.path.startsWith('/api/')) {
+      return res.status(status).json({ error: status === 500 ? 'Error interno del servidor' : 'Solicitud no válida' });
+    }
+    return res.status(status).type('text/plain').send(status === 500 ? 'Error interno del servidor' : 'Solicitud no válida');
   });
 
   return app;

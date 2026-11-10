@@ -68,6 +68,11 @@ function crearRutasApi() {
   api.use('/pedidos', requiereBase, crearRutasPedidos());
   api.use('/facturas', requiereBase, crearRutasFacturas());
 
+  // Cualquier otra dirección /api: 404 en JSON (no la página de error en texto).
+  api.use((req, res) => {
+    res.status(404).json({ error: `No existe ${req.method} /api${req.path}` });
+  });
+
   // Errores de la API: siempre en JSON y sin detalles internos.
   // eslint-disable-next-line no-unused-vars
   api.use((err, req, res, next) => {

@@ -108,9 +108,9 @@ setInterval(() => {
 /* ---------- Rutas /api ---------- */
 function crearRutasAuth() {
   const router = express.Router();
-  router.use(express.json({ limit: '10kb' }));
 
-  router.post('/login', (req, res) => {
+  // El cuerpo se lee solo en /login (10 KB máximo); el resto de /api lo lee server/api.js.
+  router.post('/login', express.json({ limit: '10kb' }), (req, res) => {
     if (bloqueado(req.ip)) {
       return res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos.' });
     }

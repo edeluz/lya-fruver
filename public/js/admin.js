@@ -49,10 +49,43 @@ function kpiCard(icon, valor, label){
     <div style="font-size:12px;color:#6b756b;">${label}</div>
   </div>`;
 }
-/* Supabase no lanza errores: los devuelve en { error }. Esto los convierte en excepciones. */
+/* Supabase no lanza errores: los devuelve en { error }. Esto los convierte en excepciones.
+   TEMPORAL (fase 2): se elimina cuando todas las secciones usen la API (función "api"). */
 function check(result){
   if(result.error) throw result.error;
   return result.data;
+}
+
+/* Llama a la API del propio servidor (/api/...). Devuelve el JSON de la respuesta.
+   Si falla, lanza un Error con el mensaje del servidor (e.status = código HTTP).
+   Si la sesión venció (401), vuelve al login. */
+async function api(metodo, ruta, cuerpo){
+  const opciones = { method: metodo, credentials: 'same-origin', headers: { 'Accept': 'application/json' } };
+  if(cuerpo !== undefined){
+    opciones.headers['Content-Type'] = 'application/json';
+    opciones.body = JSON.stringify(cuerpo);
+  }
+  const res = await fetch('/api' + ruta, opciones);
+  if(res.status === 401){ window.location.replace('login.html'); throw new Error('Debes iniciar sesión'); }
+  const datos = res.status === 204 ? null : await res.json().catch(()=>null);
+  if(!res.ok){
+    const err = new Error((datos && datos.error) || 'Error del servidor');
+    err.status = res.status;
+    throw err;
+  }
+  return datos;
+}
+
+/* Trae TODAS las filas de una lista paginada de la API (de 200 en 200). */
+async function apiListarTodo(ruta){
+  const separador = ruta.includes('?') ? '&' : '?';
+  let pagina = 1, todos = [];
+  for(;;){
+    const r = await api('GET', `${ruta}${separador}pagina=${pagina}&limite=200`);
+    todos = todos.concat(r.datos);
+    if(todos.length >= r.total || r.datos.length === 0) return todos;
+    pagina++;
+  }
 }
 
 /* ---------------- PEDIDOS ---------------- */
@@ -364,8 +397,8 @@ document.getElementById('btnCerrarModalProv').addEventListener('click', async ()
 /* ---------------- PROVEEDORES ---------------- */
 async function cargarProveedores(){
   try{
-    const data = check(await sb.from('proveedores').select('*').order('nombre'));
-    window.__proveedoresCache = (data||[]).filter(p=>p.activo!==false);
+    const data = await apiListarTodo('/proveedores');
+    window.__proveedoresCache = data.filter(p=>p.activo!==false);
     const tbody = document.getElementById('tbodyProveedores');
     setHtml(tbody, data.length ? data.map(p=>html`
       <tr data-id="${p.id}">
@@ -389,15 +422,17 @@ async function cargarProveedores(){
         const activo = tr.querySelector('.toggle-activo').classList.contains('on');
         if(!nombre){ showAlert('alertProveedores','El nombre no puede quedar vacío.'); return; }
         try{
-          check(await sb.from('proveedores').update({ nombre, telefono, direccion, activo, actualizado_en: new Date().toISOString() }).eq('id', id));
+          await api('PATCH', `/proveedores/${encodeURIComponent(id)}`, { nombre, telefono, direccion, activo });
           showAlert('alertProveedores','Proveedor actualizado correctamente.','ok');
           cargarProveedores();
-        }catch(e){ showAlert('alertProveedores','No se pudo guardar. Verifica que el nombre no esté repetido.'); }
+        }catch(e){ showAlert('alertProveedores', e.status===409 ? 'Ya existe un proveedor con ese nombre.' : 'No se pudo guardar el proveedor.'); }
       });
+      // La API no borra el proveedor: lo inhabilita (conserva su historial y sus productos).
       tr.querySelector('.btn-eliminar-prov').addEventListener('click', async ()=>{
-        if(!confirm('¿Eliminar este proveedor? También se quitará de los productos que tenía asignados.')) return;
+        if(!confirm('¿Eliminar este proveedor? Quedará inhabilitado y dejará de aparecer en las listas para elegir.')) return;
         try{
-          check(await sb.from('proveedores').delete().eq('id', id));
+          await api('DELETE', `/proveedores/${encodeURIComponent(id)}`);
+          showAlert('alertProveedores','Proveedor inhabilitado.','ok');
           cargarProveedores();
         }catch(e){ showAlert('alertProveedores','No se pudo eliminar el proveedor.'); }
       });
@@ -410,11 +445,11 @@ document.getElementById('btnAgregarProv').addEventListener('click', async ()=>{
   const direccion = document.getElementById('nuevoProvDir').value.trim() || null;
   if(!nombre){ showAlert('alertProveedores','Escribe el nombre del proveedor.'); return; }
   try{
-    check(await sb.from('proveedores').insert({ nombre, telefono, direccion }));
+    await api('POST', '/proveedores', { nombre, telefono, direccion });
     document.getElementById('nuevoProvNombre').value=''; document.getElementById('nuevoProvTel').value=''; document.getElementById('nuevoProvDir').value='';
     showAlert('alertProveedores','Proveedor agregado.','ok');
     cargarProveedores();
-  }catch(e){ showAlert('alertProveedores','No se pudo agregar. ¿Ya existe un proveedor con ese nombre?'); }
+  }catch(e){ showAlert('alertProveedores', e.status===409 ? 'Ya existe un proveedor con ese nombre.' : 'No se pudo agregar el proveedor.'); }
 });
 
 /* ---------------- COMPRA A PROVEEDORES ---------------- */
@@ -429,8 +464,7 @@ async function cargarCatalogoCompra(){
     const relaciones = check(await sb.from('producto_proveedores').select('producto_id, proveedores(id,nombre)'));
     window.__relacionesCompra = relaciones || [];
     if(!window.__proveedoresCache){
-      const provs = check(await sb.from('proveedores').select('id,nombre').eq('activo', true).order('nombre'));
-      window.__proveedoresCache = provs || [];
+      window.__proveedoresCache = await apiListarTodo('/proveedores?activo=si');
     }
   }catch(e){
     console.error(e);

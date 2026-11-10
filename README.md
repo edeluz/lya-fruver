@@ -42,6 +42,7 @@ scripts/
   sql/               Scripts de la base de datos (ver "Base de datos")
   xlsx/              Excel de proveedores (origen de sql/03-proveedores.sql)
 test/                Pruebas automáticas
+postman/             Colección y entornos de Postman para probar la API
 Dockerfile           Imagen de la app (multi-etapa, usuario sin privilegios)
 docker-compose.yml   Alternativa sin Easypanel: app + caddy (HTTPS)
 Caddyfile, caddy/    Configuración de Caddy (solo para docker-compose)
@@ -157,6 +158,53 @@ cada filtro está al inicio de cada archivo en `server/endpoints/`.
   hoy en Colombia.
 - Códigos: 400 datos no válidos, 401 sin ingreso, 403 sin permiso, 404 no existe, 409 nombre
   repetido o conflicto, 413 cuerpo muy grande, 429 demasiadas peticiones, 503 sin base de datos.
+- Todo `/api` responde JSON, también los errores: `{ "error": "...", "detalles": [...] }`
+  (`detalles` solo cuando hay campos no válidos). Una dirección `/api` que no existe da 404 en JSON.
+
+**Autenticación: dos formas** (cualquiera sirve en todas las direcciones):
+
+1. **Llave de API (sin login)**, para Postman u otros sistemas: cabecera
+   `Authorization: Bearer <API_TOKEN>`. El valor es la variable de entorno `API_TOKEN`
+   (mínimo 32 caracteres; vacía = apagada) y da rol `admin`. Generarla:
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Ponla en `.env`
+   (local) o en Environment de Easypanel; nunca en el código ni en git. Si se filtra, cámbiala
+   y reinicia. Al arrancar, el registro dice si la llave está ACTIVA o APAGADA.
+2. **Login con cookie**, el que usa el panel:
+
+| Sesión | Dirección | Cuerpo |
+|---|---|---|
+| Iniciar sesión | `POST /api/login` | `{ "email": "...", "password": "..." }` |
+| Ver sesión | `GET /api/sesion` | — |
+| Cerrar sesión | `POST /api/logout` | — |
+
+### Probar con Postman
+
+En `postman/` está la colección con todas las peticiones, más dos entornos:
+
+| Archivo | Para qué |
+|---|---|
+| `LyA-Fruver.postman_collection.json` | Todas las peticiones, en carpetas: Sesión, Proveedores, Productos, Clientes, Pedidos, Facturas |
+| `LyA-Fruver-Local.postman_environment.json` | `baseUrl=http://localhost:3000` y el usuario de prueba admin |
+| `LyA-Fruver-Produccion.postman_environment.json` | `baseUrl` del VPS; el correo y la contraseña se escriben en Postman, no en el archivo |
+
+1. Postman → **Import** → arrastra los 3 archivos de la carpeta `postman/`.
+2. Arriba a la derecha elige el entorno **L&A Fruver - Local** (o Producción; ahí cambia
+   `baseUrl` por tu dominio y escribe correo y contraseña en **Current value**).
+3. Arranca el servidor (`npm start`) y ejecuta **0. Sesión → Estado de la base (health)**: debe
+   decir `"baseDeDatos":"ok"`.
+4. **Autenticación**, una de las dos:
+   - **Sin login (recomendado):** en el entorno, escribe en `apiToken` (columna **Current value**)
+     el mismo valor de `API_TOKEN` del servidor. La colección ya usa **Authorization → Bearer
+     Token → `{{apiToken}}`**; cada petición debe tener Authorization en "Inherit auth from parent".
+   - **Con login:** ejecuta **0. Sesión → Iniciar sesión**. Postman guarda la cookie `lya_sesion`
+     y la envía sola durante 8 horas. Si alguna responde 401, vuelve a iniciar sesión.
+5. Usa cada carpeta en orden. Las peticiones **Crear** y **Listar** guardan el id (`proveedorId`,
+   `productoId`, `clienteId`, `pedidoId`, `facturaId`) en las variables de la colección, y las
+   peticiones siguientes lo usan en la dirección (`/api/proveedores/{{proveedorId}}`).
+
+**Ojo: la base es la real.** Los datos de prueba se crean con el nombre "PRUEBA POSTMAN" (el
+producto, no disponible). "Borrar pedido" **borra de verdad**: revisa el `pedidoId` antes de
+enviarlo. Las facturas no se pueden borrar. No uses "Run collection" completo contra producción.
 
 ## Base de datos
 

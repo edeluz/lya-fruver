@@ -22,6 +22,12 @@ function baseConfigurada() {
   return Boolean(DB.host && DB.user && DB.password);
 }
 
+/* Nombres de las variables obligatorias que faltan (solo los nombres, nunca los valores).
+   Se muestra en el registro al arrancar, para saber qué configurar. */
+function variablesFaltantes() {
+  return ['DB_HOST', 'DB_USER', 'DB_PASSWORD'].filter((nombre) => !process.env[nombre]);
+}
+
 /* Pool: varias conexiones reutilizables.
    mysql2 se carga solo cuando hace falta, para que el resto de la app
    (login, páginas) funcione aunque la base no esté configurada. */
@@ -78,4 +84,4 @@ async function cerrarPool() {
   }
 }
 
-module.exports = { baseConfigurada, obtenerPool, enTransaccion, cerrarPool };
+module.exports = { baseConfigurada, variablesFaltantes, obtenerPool, enTransaccion, cerrarPool };

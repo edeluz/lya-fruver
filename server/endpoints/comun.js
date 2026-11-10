@@ -5,6 +5,7 @@
    (errores, validación, paginación y permisos).
    ============================================================ */
 
+const crypto = require('node:crypto');
 const { z } = require('zod');
 const { sesionActual } = require('../auth');
 const { baseConfigurada } = require('../db');
@@ -95,11 +96,35 @@ function inicioDiaColombiaUtc(fecha, sumarDias = 0) {
   return new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
 }
 
-// Exige sesión iniciada (401) y, si se indica, uno de los roles permitidos (403).
+/* ---------- Llave de API (token) para usar el backend sin login (Postman, otros sistemas) ----------
+   Se envía en la cabecera:  Authorization: Bearer <API_TOKEN>
+   El valor sale SOLO de la variable de entorno API_TOKEN (mínimo 32 caracteres). Si no está
+   definida, la llave está apagada y solo sirve el login. Quien la usa tiene rol "admin". */
+const API_TOKEN = String(process.env.API_TOKEN || '').trim();
+const TOKEN_ACTIVO = API_TOKEN.length >= 32;
+if (API_TOKEN && !TOKEN_ACTIVO) {
+  console.warn('API_TOKEN es muy corto (mínimo 32 caracteres): la llave de API queda APAGADA.');
+}
+const HASH_TOKEN = crypto.createHash('sha256').update(API_TOKEN).digest();
+
+// Compara en tiempo constante (comparando los hash) para no dar pistas del valor.
+function tokenValido(req) {
+  if (!TOKEN_ACTIVO) return false;
+  const m = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization || '');
+  if (!m) return false;
+  const hashEnviado = crypto.createHash('sha256').update(m[1]).digest();
+  return crypto.timingSafeEqual(hashEnviado, HASH_TOKEN);
+}
+
+const USUARIO_TOKEN = Object.freeze({ email: 'api-token', nombre: 'Llave de API', rol: 'admin' });
+
+// Exige sesión iniciada o llave de API válida (401) y, si se indica, uno de los roles permitidos (403).
 function requiereSesion(...roles) {
   return (req, res, next) => {
-    const sesion = sesionActual(req);
-    if (!sesion) return res.status(401).json({ error: 'Debes iniciar sesión' });
+    const sesion = tokenValido(req) ? USUARIO_TOKEN : sesionActual(req);
+    if (!sesion) {
+      return res.status(401).json({ error: 'Debes iniciar sesión o enviar una llave de API válida (Authorization: Bearer ...)' });
+    }
     if (roles.length && !roles.includes(sesion.rol)) {
       return res.status(403).json({ error: 'No tienes permiso para esta acción' });
     }
