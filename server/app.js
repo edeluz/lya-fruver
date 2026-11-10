@@ -5,6 +5,7 @@ const express = require('express');
 const helmet = require('helmet');
 const config = require('./config');
 const { crearRutasAuth, protegerPanel } = require('./auth');
+const { crearRutasApi } = require('./api');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
@@ -58,6 +59,8 @@ function createApp() {
     res.json({ status: 'ok' });
   });
 
+  // API de datos (server/api.js) y login (server/auth.js).
+  app.use('/api', crearRutasApi());
   app.use('/api', crearRutasAuth());
 
   // El panel exige sesión: sin ella, la página manda al login y su JS responde 401.

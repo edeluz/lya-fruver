@@ -172,4 +172,4 @@ function protegerPanel(req, res, next) {
   return res.redirect(302, '/login');
 }
 
-module.exports = { crearRutasAuth, protegerPanel };
+module.exports = { crearRutasAuth, protegerPanel, sesionActual };
