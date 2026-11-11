@@ -1,0 +1,304 @@
+/* ============================================================
+   L&A FRUVER - Sistema de diseño (común a todas las páginas)
+   Se carga DESPUÉS de bootstrap.min.css y lo ajusta a la marca.
+   Basado en la "Identidad visual Fruver 2026" de la referencia.
+   Documentación: docs/diseno.md
+   ============================================================ */
+
+/* ---------- 1. Variables de la marca ---------- */
+:root {
+  /* Colores */
+  --fr-verde: #137548;          /* color principal */
+  --fr-verde-oscuro: #095d38;   /* hover, títulos */
+  --fr-verde-boton-1: #168253;  /* degradado del botón principal */
+  --fr-verde-boton-2: #0d6a41;
+  --fr-lima: #8fbe3f;
+  --fr-amarillo: #ffc934;
+  --fr-naranja: #f28b35;
+  --fr-menta: #eaf7ee;          /* fondos suaves, chips */
+  --fr-menta-2: #dff2e5;
+  --fr-tinta: #14382b;          /* texto principal */
+  --fr-gris: #66776f;           /* texto secundario */
+  --fr-linea: #dce9df;          /* bordes */
+  --fr-borde-campo: #cfded3;
+  --fr-fondo: #f5f8f3;
+  --fr-peligro: #c74444;
+  --fr-peligro-fondo: #fff0ef;
+
+  /* Tipografía */
+  --fr-fuente-titulos: Georgia, 'Times New Roman', serif;
+  --fr-fuente-texto: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Bordes redondeados */
+  --fr-radio-sm: 10px;
+  --fr-radio: 12px;      /* campos y botones */
+  --fr-radio-lg: 20px;   /* tarjetas */
+  --fr-radio-xl: 24px;   /* tarjeta de login */
+
+  /* Sombras (verdosas y suaves) */
+  --fr-sombra: 0 12px 34px rgba(19, 72, 46, .09);
+  --fr-sombra-hover: 0 18px 46px rgba(19, 72, 46, .15);
+  --fr-sombra-login: 0 25px 70px rgba(16, 79, 47, .15);
+  --fr-halo-foco: 0 0 0 4px rgba(19, 117, 72, .11);
+
+  /* Franja de degradado de la marca */
+  --fr-franja: linear-gradient(90deg, var(--fr-verde), var(--fr-lima), var(--fr-amarillo), var(--fr-naranja));
+
+  /* ---------- Ajuste de variables de Bootstrap ---------- */
+  --bs-primary: var(--fr-verde);
+  --bs-primary-rgb: 19, 117, 72;
+  --bs-success: var(--fr-verde);
+  --bs-success-rgb: 19, 117, 72;
+  --bs-danger: var(--fr-peligro);
+  --bs-danger-rgb: 199, 68, 68;
+  --bs-warning: var(--fr-amarillo);
+  --bs-warning-rgb: 255, 201, 52;
+  --bs-body-font-family: var(--fr-fuente-texto);
+  --bs-body-color: var(--fr-tinta);
+  --bs-body-bg: var(--fr-fondo);
+  --bs-secondary-color: var(--fr-gris);
+  --bs-border-color: var(--fr-linea);
+  --bs-border-radius: var(--fr-radio);
+  --bs-border-radius-lg: var(--fr-radio-lg);
+  --bs-link-color: var(--fr-verde);
+  --bs-link-color-rgb: 19, 117, 72;
+  --bs-link-hover-color: var(--fr-verde-oscuro);
+  --bs-link-hover-color-rgb: 9, 93, 56;
+  --bs-focus-ring-color: rgba(19, 117, 72, .25);
+}
+
+/* ---------- 2. Base ---------- */
+body {
+  font-family: var(--fr-fuente-texto);
+  color: var(--fr-tinta);
+  background:
+    radial-gradient(circle at 7% 2%, rgba(143, 190, 63, .12), transparent 24rem),
+    radial-gradient(circle at 94% 22%, rgba(255, 201, 52, .10), transparent 21rem),
+    linear-gradient(180deg, #f8fbf6 0, #f3f7f2 100%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, .fr-titulo {
+  font-family: var(--fr-fuente-titulos);
+  font-weight: 700;
+  color: var(--fr-tinta);
+  letter-spacing: -.02em;
+}
+
+/* Etiqueta pequeña en mayúsculas sobre los títulos ("PANEL PRIVADO") */
+.fr-etiqueta {
+  color: var(--fr-verde);
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+}
+
+:focus-visible { outline: 3px solid var(--fr-amarillo); outline-offset: 2px; }
+
+/* ---------- 3. Botones ---------- */
+.btn {
+  --bs-btn-border-radius: var(--fr-radio);
+  --bs-btn-font-weight: 700;
+  min-height: 43px;
+  transition: transform .15s, box-shadow .2s, background .2s;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled, .btn.disabled { opacity: .55; box-shadow: none; transform: none; }
+
+.btn-primary {
+  --bs-btn-bg: var(--fr-verde);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-bg: var(--fr-verde-oscuro);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-bg: var(--fr-verde-oscuro);
+  --bs-btn-active-border-color: transparent;
+  --bs-btn-disabled-bg: var(--fr-verde);
+  --bs-btn-disabled-border-color: transparent;
+  background-image: linear-gradient(135deg, var(--fr-verde-boton-1), var(--fr-verde-boton-2));
+  box-shadow: 0 7px 16px rgba(19, 117, 72, .18);
+}
+.btn-primary:hover { background-image: linear-gradient(135deg, var(--fr-verde-boton-2), var(--fr-verde-oscuro)); }
+
+/* Secundario: fondo menta y texto verde */
+.btn-secondary {
+  --bs-btn-color: var(--fr-verde);
+  --bs-btn-bg: #ebf7ee;
+  --bs-btn-border-color: #d3ead9;
+  --bs-btn-hover-color: var(--fr-verde-oscuro);
+  --bs-btn-hover-bg: var(--fr-menta-2);
+  --bs-btn-hover-border-color: #c3e2cc;
+  --bs-btn-active-color: var(--fr-verde-oscuro);
+  --bs-btn-active-bg: var(--fr-menta-2);
+  --bs-btn-active-border-color: #c3e2cc;
+}
+
+/* Amarillo de la marca */
+.btn-warning {
+  --bs-btn-color: #2d3b25;
+  --bs-btn-hover-color: #2d3b25;
+  --bs-btn-active-color: #2d3b25;
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-border-color: transparent;
+  background-image: linear-gradient(135deg, #ffd643, #ffbd20);
+  box-shadow: 0 7px 16px rgba(230, 168, 17, .18);
+}
+
+/* Peligro suave (eliminar / inactivar) */
+.btn-outline-danger {
+  --bs-btn-color: #b33b3b;
+  --bs-btn-bg: var(--fr-peligro-fondo);
+  --bs-btn-border-color: #f2ceca;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--fr-peligro);
+  --bs-btn-hover-border-color: var(--fr-peligro);
+}
+
+/* ---------- 4. Campos de formulario ---------- */
+.form-label { font-size: 13px; font-weight: 700; color: #365a49; margin-bottom: 6px; }
+
+.form-control, .form-select {
+  min-height: 46px;
+  border-radius: var(--fr-radio);
+  border-color: var(--fr-borde-campo);
+  background-color: #fbfdfb;
+  color: var(--fr-tinta);
+  transition: border-color .18s, box-shadow .18s, background-color .18s;
+}
+.form-control:hover, .form-select:hover { border-color: #aecab6; background-color: #fff; }
+.form-control:focus, .form-select:focus {
+  border-color: var(--fr-verde);
+  background-color: #fff;
+  box-shadow: var(--fr-halo-foco);
+}
+.form-control::placeholder { color: #9aa79f; }
+
+/* Validación visual */
+.form-control.is-invalid, .was-validated .form-control:invalid { border-color: var(--fr-peligro); }
+.form-control.is-invalid:focus { box-shadow: 0 0 0 4px rgba(199, 68, 68, .12); }
+
+/* ---------- 5. Tarjetas ---------- */
+.card {
+  --bs-card-border-radius: var(--fr-radio-lg);
+  --bs-card-border-color: rgba(215, 230, 219, .92);
+  --bs-card-inner-border-radius: calc(var(--fr-radio-lg) - 1px);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: var(--fr-sombra);
+  transition: box-shadow .25s;
+}
+.card:hover { box-shadow: var(--fr-sombra-hover); }
+
+/* ---------- 6. Alertas ---------- */
+.alert { border-radius: var(--fr-radio-sm); font-size: 14px; font-weight: 500; }
+.alert-danger { --bs-alert-color: #9e3030; --bs-alert-bg: var(--fr-peligro-fondo); --bs-alert-border-color: #f3c6c1; }
+.alert-success { --bs-alert-color: var(--fr-verde-oscuro); --bs-alert-bg: var(--fr-menta); --bs-alert-border-color: #b7dfb9; }
+
+/* ---------- 7. Logo ---------- */
+/* El logo tiene un borde blanco fino: va siempre sobre fondos claros o tarjetas blancas. */
+.fr-logo { display: block; height: auto; max-width: 100%; }
+.fr-logo-login { width: 220px; margin: 0 auto; }
+.fr-logo-navbar { width: 100px; }
+
+/* ============================================================
+   PÁGINA DE LOGIN
+   ============================================================ */
+.fr-login {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(143, 190, 63, .24), transparent 27rem),
+    radial-gradient(circle at 85% 85%, rgba(255, 201, 52, .20), transparent 25rem),
+    linear-gradient(145deg, #eef8ed, #f9fbf6);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px 16px;
+  overflow-x: hidden;
+}
+/* Círculos difusos fijos en los bordes */
+.fr-login::before, .fr-login::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+.fr-login::before { width: 220px; height: 220px; right: -110px; top: 38%; background: rgba(242, 139, 53, .055); }
+.fr-login::after  { width: 180px; height: 180px; left: -90px; bottom: 12%; background: rgba(143, 190, 63, .075); }
+
+.fr-login-wrap { width: 100%; max-width: 420px; }
+
+.fr-login-volver {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px;
+  color: var(--fr-verde-oscuro); font-size: 13.5px; font-weight: 600; text-decoration: none;
+}
+.fr-login-volver:hover { text-decoration: underline; color: var(--fr-verde-oscuro); }
+
+.fr-login-card {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border: 0;
+  border-radius: var(--fr-radio-xl);
+  box-shadow: var(--fr-sombra-login);
+  padding: 36px 32px 28px;
+}
+/* Franja de degradado arriba de la tarjeta */
+.fr-login-card::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 0; height: 7px;
+  background: var(--fr-franja);
+}
+.fr-login-card h1 { font-size: 36px; margin: 4px 0 6px; letter-spacing: -.04em; }
+.fr-login-sub { color: var(--fr-gris); margin-bottom: 24px; }
+.fr-login-pie { text-align: center; color: var(--fr-gris); font-size: 12.5px; margin-top: 18px; }
+
+/* Botón "Mostrar" dentro del campo de contraseña */
+.fr-campo-clave { position: relative; }
+.fr-campo-clave .form-control { padding-right: 96px; }
+/* Sin el ícono rojo de Bootstrap aquí: se montaría encima del botón "Mostrar" (el borde rojo basta) */
+.fr-campo-clave .form-control.is-invalid { background-image: none; padding-right: 96px; }
+.fr-btn-ver {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  border: 0; background: none; color: var(--fr-verde); font-weight: 700; font-size: 13px;
+  padding: 8px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;
+}
+.fr-btn-ver:hover { background: var(--fr-menta); }
+
+/* ---------- Opciones grandes con ícono (portada index.html) ---------- */
+.fr-opcion {
+  display: flex; align-items: center; gap: 14px;
+  text-align: left; text-decoration: none; color: var(--fr-tinta);
+  background: #fff; border: 1px solid var(--fr-linea); border-radius: 16px;
+  padding: 16px; margin-bottom: 12px;
+  box-shadow: 0 4px 13px rgba(21, 71, 46, .05);
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.fr-opcion:hover {
+  color: var(--fr-tinta); border-color: #b9d5c1;
+  box-shadow: 0 8px 22px rgba(18, 78, 48, .10); transform: translateY(-1px);
+}
+.fr-opcion-icono {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 21px;
+  background: var(--fr-menta); color: var(--fr-verde);
+}
+.fr-opcion-icono-amarillo { background: #fff4d2; color: #a66b14; }
+.fr-opcion-texto { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.fr-opcion-texto strong { font-size: 15.5px; color: var(--fr-verde-oscuro); }
+.fr-opcion-texto small { font-size: 13px; color: var(--fr-gris); line-height: 1.35; }
+.fr-opcion-flecha { color: #9fb3a6; transition: transform .2s; }
+.fr-opcion:hover .fr-opcion-flecha { color: var(--fr-verde); transform: translateX(3px); }
+
+/* Línea de versión bajo la tarjeta (la llena js/login.js) */
+.fr-version {
+  font-size: 11px; line-height: 1.5; color: #9aa39a; margin-top: 14px;
+  white-space: nowrap; width: max-content; margin-left: 50%; transform: translateX(-50%);
+}
+.fr-version:empty { display: none; }
+
+@media (max-width: 520px) {
+  .fr-login-card { padding: 30px 22px 24px; }
+  .fr-login-card h1 { font-size: 30px; }
+  .fr-logo-login { width: 180px; }
+  .fr-version { white-space: normal; width: auto; margin-left: 0; transform: none; text-align: center; }
+}

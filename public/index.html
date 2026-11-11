@@ -3,38 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#137548">
 <title>L&A Fruver</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23ffc800%22/><text x=%2250%22 y=%2265%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22%232e7d32%22 font-family=%22sans-serif%22 font-weight=%22bold%22>L&A</text></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" href="img/favicon-180.png">
+<link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+<link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
 <link rel="stylesheet" href="css/fonts.css">
-<style>
-  :root{--verde:#1e7d32;--verde-oscuro:#145a24;--amarillo:#ffc800;--gris-suave:#f4f6f4;--gris-texto:#3a3f3a;--borde:#d9e3d9;--sombra:0 4px 14px rgba(20,90,36,0.10);}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Inter',sans-serif;background:var(--gris-suave);color:var(--gris-texto);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .wrap{max-width:420px;width:100%;text-align:center;}
-  .badge{width:76px;height:76px;background:var(--amarillo);border-radius:20px;display:flex;align-items:center;justify-content:center;
-    font-family:'Poppins';font-weight:800;color:var(--verde-oscuro);font-size:24px;margin:0 auto 16px;}
-  h1{font-family:'Poppins';font-size:24px;color:var(--verde-oscuro);margin-bottom:4px;}
-  p{font-size:14px;color:#6b756b;margin-bottom:30px;}
-  a.option{display:block;background:white;border:1.5px solid var(--borde);border-radius:16px;padding:20px;margin-bottom:14px;
-    text-decoration:none;color:var(--gris-texto);box-shadow:var(--sombra);text-align:left;}
-  a.option:hover{border-color:var(--verde);}
-  a.option .t{font-weight:700;color:var(--verde-oscuro);font-size:16px;margin-bottom:3px;}
-  a.option .d{font-size:13px;color:#6b756b;}
-</style>
+<link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-<div class="wrap">
-  <div class="badge">L&A</div>
-  <h1>L&A Fruver</h1>
-  <p>Calidad y Servicio</p>
-  <a class="option" href="cliente.html">
-    <div class="t">🧺 Hacer un pedido</div>
-    <div class="d">Para clientes: elige tus productos y envía tu pedido.</div>
-  </a>
-  <a class="option" href="admin.html">
-    <div class="t">📋 Panel de administración</div>
-    <div class="d">Para la dueña: gestiona pedidos, catálogo y reportes.</div>
-  </a>
-</div>
+<body class="fr-login">
+<main class="fr-login-wrap">
+  <section class="fr-login-card text-center">
+    <img class="fr-logo fr-logo-login mb-3" src="img/logo-login.png" width="220" height="118"
+         alt="Fruver L&A — Calidad y Servicio">
+    <h1 class="mb-1">Bienvenido</h1>
+    <p class="fr-login-sub">¿Qué quieres hacer hoy?</p>
+
+    <a class="fr-opcion" href="cliente.html">
+      <span class="fr-opcion-icono"><i class="bi bi-basket" aria-hidden="true"></i></span>
+      <span class="fr-opcion-texto">
+        <strong>Hacer un pedido</strong>
+        <small>Para clientes: elige tus productos y envía tu pedido.</small>
+      </span>
+      <i class="bi bi-chevron-right fr-opcion-flecha" aria-hidden="true"></i>
+    </a>
+
+    <a class="fr-opcion" href="admin.html">
+      <span class="fr-opcion-icono fr-opcion-icono-amarillo"><i class="bi bi-clipboard-data" aria-hidden="true"></i></span>
+      <span class="fr-opcion-texto">
+        <strong>Panel de administración</strong>
+        <small>Para la dueña: gestiona pedidos, catálogo y reportes.</small>
+      </span>
+      <i class="bi bi-chevron-right fr-opcion-flecha" aria-hidden="true"></i>
+    </a>
+
+    <p class="fr-login-pie mb-0">L&A Fruver · Calidad y Servicio</p>
+  </section>
+</main>
 </body>
 </html>

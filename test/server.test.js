@@ -98,7 +98,10 @@ test('cerrar sesión invalida la cookie', async () => {
 });
 
 for (const asset of [
-  '/js/common.js', '/js/cliente.js', '/js/login.js', '/css/fonts.css',
+  '/js/common.js', '/js/cliente.js', '/js/login.js', '/js/app.js', '/css/fonts.css', '/css/app.css',
+  '/vendor/bootstrap/bootstrap.min.css', '/vendor/bootstrap/bootstrap.bundle.min.js', '/vendor/jquery.min.js',
+  '/vendor/bootstrap-icons/bootstrap-icons.min.css', '/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2',
+  '/img/logo-login.png', '/img/logo-navbar.png', '/img/favicon-32.png', '/img/favicon-180.png',
   '/vendor/chart.umd.min.js', '/vendor/html2canvas.min.js', '/vendor/xlsx.full.min.js',
   '/fonts/poppins-latin-700-normal.woff2', '/fonts/inter-latin-400-normal.woff2',
 ]) {

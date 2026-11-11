@@ -95,13 +95,39 @@ async function assertNoXss(page) {
   assert.equal(result.injected, 0, 'se creó HTML inyectado');
 }
 
-test('login (primera pantalla): carga fuentes propias sin errores', { skip }, async () => {
+test('login (primera pantalla): carga Bootstrap, íconos, fuentes y logo sin errores', { skip }, async () => {
   const { page, problems } = await openPage('/');
   await page.evaluate(() => document.fonts.ready);
   const loaded = await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family));
-  assert.ok(loaded.some((f) => f.includes('Poppins')), 'Poppins no cargó');
   assert.ok(loaded.some((f) => f.includes('Inter')), 'Inter no cargó');
+  assert.ok(loaded.some((f) => f.includes('bootstrap-icons')), 'los íconos de Bootstrap no cargaron');
+  const logo = await page.$eval('img.fr-logo-login', (img) => ({ ok: img.complete && img.naturalWidth > 0 }));
+  assert.ok(logo.ok, 'el logo no cargó');
+  // El botón principal tiene el degradado verde de app.css (prueba que Bootstrap y app.css cargaron)
+  const fondo = await page.$eval('#btnIngresar', (b) => getComputedStyle(b).backgroundImage);
+  assert.match(fondo, /linear-gradient/);
   assert.deepEqual(problems, []);
+  await page.close();
+});
+
+test('login: muestra errores visibles y marca los campos vacíos', { skip }, async () => {
+  const { page, problems } = await openPage('/');
+  await page.click('#btnIngresar');
+  const estado = await page.evaluate(() => ({
+    clase: document.getElementById('msg').className,
+    texto: document.getElementById('msg').textContent,
+    emailInvalido: document.getElementById('email').classList.contains('is-invalid'),
+  }));
+  assert.match(estado.clase, /alert-danger/);
+  assert.equal(estado.texto, 'Escribe tu correo y tu contraseña.');
+  assert.equal(estado.emailInvalido, true);
+
+  await page.type('#email', 'nadie@lyafruver.test');
+  await page.type('#password', 'clave-incorrecta');
+  await page.click('#btnIngresar');
+  await page.waitForFunction(() => document.getElementById('msg').textContent.includes('incorrectos'));
+  // Con usuarios de prueba activos, un 401 es lo esperado: el navegador lo anota como error de red.
+  assert.deepEqual(problems.filter((p) => !p.includes('401')), []);
   await page.close();
 });
 

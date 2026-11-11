@@ -14,6 +14,15 @@ const VENDOR_FILES = [
   ['chart.js/dist/chart.umd.min.js', 'vendor/chart.umd.min.js'],
   ['html2canvas/dist/html2canvas.min.js', 'vendor/html2canvas.min.js'],
   ['xlsx/dist/xlsx.full.min.js', 'vendor/xlsx.full.min.js'],
+  // Bootstrap 5 (estilos + JS con Popper incluido), sus íconos y jQuery
+  ['bootstrap/dist/css/bootstrap.min.css', 'vendor/bootstrap/bootstrap.min.css'],
+  ['bootstrap/dist/css/bootstrap.min.css.map', 'vendor/bootstrap/bootstrap.min.css.map'],
+  ['bootstrap/dist/js/bootstrap.bundle.min.js', 'vendor/bootstrap/bootstrap.bundle.min.js'],
+  ['bootstrap/dist/js/bootstrap.bundle.min.js.map', 'vendor/bootstrap/bootstrap.bundle.min.js.map'],
+  ['bootstrap-icons/font/bootstrap-icons.min.css', 'vendor/bootstrap-icons/bootstrap-icons.min.css'],
+  ['bootstrap-icons/font/fonts/bootstrap-icons.woff2', 'vendor/bootstrap-icons/fonts/bootstrap-icons.woff2'],
+  ['bootstrap-icons/font/fonts/bootstrap-icons.woff', 'vendor/bootstrap-icons/fonts/bootstrap-icons.woff'],
+  ['jquery/dist/jquery.min.js', 'vendor/jquery.min.js'],
 ];
 
 const FONT_WEIGHTS = {
