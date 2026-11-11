@@ -65,6 +65,8 @@
   .msg.err{background:#fdecea;color:var(--rojo);border:1px solid #f3c6c1;}
   .msg.ok{background:var(--verde-claro);color:var(--verde-oscuro);border:1px solid #b7dfb9;}
   .foot{text-align:center;font-size:12px;color:#8a938a;margin-top:18px;}
+  .version{text-align:center;font-size:11px;line-height:1.5;color:#9aa39a;margin-top:14px;}
+  .version:empty{display:none;}
   :focus-visible{outline:3px solid var(--amarillo);outline-offset:2px;}
 </style>
 </head>
@@ -98,6 +100,9 @@
 
     <div class="foot">L&A Fruver · Calidad y Servicio</div>
   </div>
+
+  <!-- Versión, build y fechas: lo llena js/login.js con /api/version -->
+  <div class="version" id="infoVersion"></div>
 </main>
 
 <script src="js/login.js"></script>

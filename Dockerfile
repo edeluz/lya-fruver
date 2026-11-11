@@ -7,8 +7,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
 
-COPY scripts/copy-vendor.js scripts/
+COPY scripts/copy-vendor.js scripts/build-info.js scripts/
 COPY public/ public/
+# server/ se copia aquí solo para que, si cambia el código, se vuelva a generar
+# build-info.json (número de build y fecha) en vez de reusar el de la caché de Docker.
+COPY server/ server/
 RUN npm run build \
  && npm prune --omit=dev --ignore-scripts
 
@@ -21,6 +24,7 @@ WORKDIR /app
 # Los archivos quedan de root y solo lectura para la app: el usuario "node" no puede modificarlos.
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/public ./public
+COPY --from=build /app/build-info.json ./
 COPY package.json ./
 COPY server/ ./server/
 

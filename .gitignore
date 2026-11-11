@@ -7,6 +7,7 @@
 node_modules/
 public/vendor/
 public/fonts/
+build-info.json
 
 # Copias de seguridad de la base de datos
 backups/

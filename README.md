@@ -146,6 +146,7 @@ cada filtro está al inicio de cada archivo en `server/endpoints/`.
 | Unidad | Direcciones | Qué hace "borrar" (DELETE) |
 |---|---|---|
 | Estado | `GET /api/health` (sin ingreso) | — |
+| Versión | `GET /api/version` (sin ingreso): versión, build, fecha de build y hora de arranque. Se muestra abajo en el login | — |
 | Proveedores | `GET /api/proveedores`, `GET/PUT/PATCH/DELETE /api/proveedores/:id`, `POST /api/proveedores` | Inhabilita (`activo = 0`) |
 | Clientes | `GET /api/clientes`, `GET/PUT/PATCH/DELETE /api/clientes/:id`, `POST /api/clientes` | Inhabilita (`activo = 0`) |
 | Productos | `GET /api/productos`, `GET/PUT/PATCH/DELETE /api/productos/:id`, `POST /api/productos`, `PUT /api/productos/:id/proveedores` | Marca como no disponible |

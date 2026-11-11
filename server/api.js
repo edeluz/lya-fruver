@@ -15,6 +15,7 @@ const { crearRutasProductos } = require('./endpoints/productos');
 const { crearRutasClientes } = require('./endpoints/clientes');
 const { crearRutasPedidos } = require('./endpoints/pedidos');
 const { crearRutasFacturas } = require('./endpoints/facturas');
+const { infoVersion } = require('./version');
 
 /* ---------- Límite de peticiones por IP (en memoria): 300 por minuto ---------- */
 const VENTANA_MS = 60 * 1000;
@@ -60,6 +61,9 @@ function crearRutasApi() {
       return res.status(503).json({ status: 'error', baseDeDatos: 'sin conexión' });
     }
   }));
+
+  // Versión, número de build, fecha de construcción y hora de arranque (pública, sin secretos).
+  api.get('/version', (req, res) => { res.json(infoVersion()); });
 
   // Unidades de negocio
   api.use('/proveedores', requiereBase, crearRutasProveedores());

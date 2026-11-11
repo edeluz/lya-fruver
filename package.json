@@ -9,7 +9,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "node scripts/copy-vendor.js",
+    "build": "node scripts/copy-vendor.js && node scripts/build-info.js",
     "start": "node --env-file-if-exists=.env server/index.js",
     "dev": "node --env-file-if-exists=.env --watch server/index.js",
     "test": "node --test \"test/**/*.test.js\"",
