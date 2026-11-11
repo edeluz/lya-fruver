@@ -41,10 +41,14 @@ get_value() {
 
 set_value() {
   local key=$1 value=$2 tmp
-  case "$value" in *"'"*|*$'\n'*) fail "El valor de $key no puede contener comillas simples ni saltos de línea." ;; esac
+  # Se escribe SIN comillas (CLAVE=valor), así que el valor no puede tener
+  # espacios, comillas, # ni saltos de línea (se cortaría o se leería mal).
+  case "$value" in
+    *[[:space:]]*|*"'"*|*'"'*|*'#'*) fail "El valor de $key no puede contener espacios, comillas ni #." ;;
+  esac
   tmp=$(mktemp "${ENV_FILE}.XXXXXX")
   grep -vE "^${key}=" "$ENV_FILE" > "$tmp" || true
-  printf "%s='%s'\n" "$key" "$value" >> "$tmp"
+  printf '%s=%s\n' "$key" "$value" >> "$tmp"
   chmod 600 "$tmp"
   mv "$tmp" "$ENV_FILE"
 }

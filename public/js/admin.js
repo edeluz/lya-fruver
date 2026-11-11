@@ -298,22 +298,32 @@ async function eliminarPedido(pedidoId){
 /* ---------------- CATALOGO ---------------- */
 setHtml(document.getElementById('nuevoProdUnidad'), UNIT_OPTIONS.map(u=>html`<option value="${u}">${u}</option>`));
 
+/* Precio escrito en pantalla: vacío = sin precio (null); si no, el número. */
+function leerPrecio(texto){
+  const t = String(texto).trim();
+  if(t === '') return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n >= 0 ? n : NaN;
+}
+
 async function cargarCatalogo(){
   try{
-    const productos = check(await sb.from('productos').select('*').order('nombre'));
-    const relaciones = check(await sb.from('producto_proveedores').select('producto_id, proveedores(id,nombre)'));
-    const proveedores = check(await sb.from('proveedores').select('id,nombre').eq('activo', true).order('nombre'));
-    window.__proveedoresCache = proveedores || [];
+    // Cada producto ya trae sus proveedores: [{ id, nombre }] (GET /api/productos).
+    const [productos, proveedores] = await Promise.all([
+      apiListarTodo('/productos'),
+      apiListarTodo('/proveedores?activo=si'),
+    ]);
+    window.__proveedoresCache = proveedores;
 
     document.getElementById('catalogoCount').textContent = `Productos (${productos.length})`;
     const tbody = document.getElementById('tbodyCatalogo');
     setHtml(tbody, productos.map(p=>{
-      const provsDelProd = (relaciones||[]).filter(r=>r.producto_id===p.id && r.proveedores).map(r=>r.proveedores.nombre);
+      const provsDelProd = p.proveedores.map(pv=>pv.nombre);
       return html`
       <tr data-id="${p.id}">
         <td><input type="text" class="edit-nombre" value="${p.nombre}" style="width:170px;"></td>
         <td><select class="edit-unidad">${UNIT_OPTIONS.map(u=>html`<option value="${u}" ${u===p.unidad?'selected':''}>${u}</option>`)}</select></td>
-        <td class="num"><input type="number" class="edit-precio" value="${p.precio||''}" style="width:90px;text-align:right;"></td>
+        <td class="num"><input type="number" class="edit-precio" value="${p.precio ?? ''}" style="width:90px;text-align:right;"></td>
         <td><button class="toggle ${p.disponible?'on':'off'} toggle-disp"></button></td>
         <td><button class="btn btn-small btn-provs" style="background:var(--verde-claro);color:var(--verde-oscuro);font-size:11.5px;max-width:160px;white-space:normal;text-align:left;line-height:1.3;">${provsDelProd.length ? provsDelProd.join(', ') : 'Sin asignar'}</button></td>
         <td style="display:flex;gap:6px;"><button class="btn btn-small btn-guardar">Guardar</button><button class="btn btn-small btn-danger btn-eliminar">Eliminar</button></td>
@@ -328,21 +338,26 @@ async function cargarCatalogo(){
       tr.querySelector('.btn-guardar').addEventListener('click', async ()=>{
         const nombre = tr.querySelector('.edit-nombre').value.trim();
         const unidad = tr.querySelector('.edit-unidad').value;
-        const precio = parseFloat(tr.querySelector('.edit-precio').value) || null;
+        const precio = leerPrecio(tr.querySelector('.edit-precio').value);
         const disponible = tr.querySelector('.toggle-disp').classList.contains('on');
+        if(!nombre){ showAlert('alertCatalogo','El nombre no puede quedar vacío.'); return; }
+        if(Number.isNaN(precio)){ showAlert('alertCatalogo','El precio debe ser un número mayor o igual a 0.'); return; }
         try{
-          check(await sb.from('productos').update({ nombre, unidad, precio, disponible }).eq('id', id));
+          await api('PATCH', `/productos/${encodeURIComponent(id)}`, { nombre, unidad, precio, disponible });
           showAlert('alertCatalogo','Producto actualizado correctamente.','ok');
-        }catch(e){ showAlert('alertCatalogo','No se pudo guardar. Verifica que el nombre no esté repetido.'); }
+        }catch(e){ showAlert('alertCatalogo', e.status===409 ? 'Ya existe un producto con ese nombre.' : 'No se pudo guardar el producto.'); }
       });
+      // La API no borra el producto (lo usan pedidos viejos): lo marca como NO disponible.
       tr.querySelector('.btn-eliminar').addEventListener('click', async ()=>{
-        if(!confirm('¿Eliminar este producto del catálogo?')) return;
+        if(!confirm('¿Eliminar este producto? Quedará como NO disponible y dejará de aparecer en el formulario de pedidos.')) return;
         try{
-          check(await sb.from('productos').delete().eq('id', id));
+          await api('DELETE', `/productos/${encodeURIComponent(id)}`);
+          showAlert('alertCatalogo','Producto marcado como no disponible.','ok');
           cargarCatalogo();
         }catch(e){ showAlert('alertCatalogo','No se pudo eliminar el producto.'); }
       });
-      tr.querySelector('.btn-provs').addEventListener('click', ()=> abrirModalProveedores(id, tr.querySelector('.edit-nombre').value, relaciones));
+      const asignadosIds = productos.find(x=>x.id===id).proveedores.map(pv=>pv.id);
+      tr.querySelector('.btn-provs').addEventListener('click', ()=> abrirModalProveedores(id, tr.querySelector('.edit-nombre').value, asignadosIds));
     });
   }catch(e){
     console.error(e);
@@ -353,19 +368,21 @@ async function cargarCatalogo(){
 document.getElementById('btnAgregarProd').addEventListener('click', async ()=>{
   const nombre = document.getElementById('nuevoProdNombre').value.trim();
   const unidad = document.getElementById('nuevoProdUnidad').value;
-  const precio = parseFloat(document.getElementById('nuevoProdPrecio').value) || null;
+  const precio = leerPrecio(document.getElementById('nuevoProdPrecio').value);
   if(!nombre){ showAlert('alertCatalogo','Escribe el nombre del producto.'); return; }
+  if(Number.isNaN(precio)){ showAlert('alertCatalogo','El precio debe ser un número mayor o igual a 0.'); return; }
   try{
-    check(await sb.from('productos').insert({ nombre, unidad, precio }));
+    await api('POST', '/productos', { nombre, unidad, precio });
     document.getElementById('nuevoProdNombre').value=''; document.getElementById('nuevoProdPrecio').value='';
     showAlert('alertCatalogo','Producto agregado.','ok');
     cargarCatalogo();
-  }catch(e){ showAlert('alertCatalogo','No se pudo agregar. ¿Ya existe un producto con ese nombre?'); }
+  }catch(e){ showAlert('alertCatalogo', e.status===409 ? 'Ya existe un producto con ese nombre.' : 'No se pudo agregar el producto.'); }
 });
 
-function abrirModalProveedores(productoId, nombreProducto, relaciones){
+/* asignadosIds: ids de los proveedores que ya surten este producto. */
+function abrirModalProveedores(productoId, nombreProducto, asignadosIds){
   document.getElementById('modalProdNombre').textContent = nombreProducto;
-  const asignados = new Set((relaciones||[]).filter(r=>r.producto_id===productoId && r.proveedores).map(r=>r.proveedores.id));
+  const asignados = new Set(asignadosIds || []);
   const list = document.getElementById('modalProvList');
   const provs = window.__proveedoresCache || [];
   if(provs.length===0){
@@ -385,10 +402,8 @@ document.getElementById('btnCerrarModalProv').addEventListener('click', async ()
   const checks = document.querySelectorAll('#modalProvList input[type=checkbox]');
   const seleccionados = [...checks].filter(c=>c.checked).map(c=>c.dataset.prov);
   try{
-    check(await sb.from('producto_proveedores').delete().eq('producto_id', productoId));
-    if(seleccionados.length>0){
-      check(await sb.from('producto_proveedores').insert(seleccionados.map(pid=>({producto_id:productoId, proveedor_id:pid}))));
-    }
+    // Reemplaza la lista completa de proveedores del producto (transacción en el servidor).
+    await api('PUT', `/productos/${encodeURIComponent(productoId)}/proveedores`, { proveedores: seleccionados });
     document.getElementById('modalProvBg').classList.remove('show');
     cargarCatalogo();
   }catch(e){ console.error(e); showAlert('alertCatalogo','No se pudieron guardar los proveedores asignados.'); }
@@ -640,10 +655,8 @@ function renderCompraPorProveedor(){
 /* ---------------- CLIENTES ---------------- */
 async function cargarClientes(){
   try{
-    const clientes = check(await sb.from('clientes').select('*').order('nombre'));
-    const pedidos = check(await sb.from('pedidos').select('cliente_id'));
-    const conteo = {};
-    (pedidos||[]).forEach(p=> conteo[p.cliente_id] = (conteo[p.cliente_id]||0)+1);
+    // La API ya trae cada cliente con su "total_pedidos".
+    const clientes = await apiListarTodo('/clientes');
 
     document.getElementById('clientesCount').textContent = `Clientes (${clientes.length})`;
     const tbody = document.getElementById('tbodyClientes');
@@ -652,7 +665,7 @@ async function cargarClientes(){
         <td><input type="text" class="edit-nombre" value="${c.nombre}" style="width:170px;"></td>
         <td><input type="text" class="edit-tel" value="${c.telefono||''}" style="width:120px;"></td>
         <td><input type="text" class="edit-dir" value="${c.direccion||''}" style="width:150px;"></td>
-        <td class="num">${conteo[c.id]||0}</td>
+        <td class="num">${c.total_pedidos||0}</td>
         <td style="font-size:12px;">${new Date(c.creado_en).toLocaleDateString('es-CO')}</td>
         <td><button class="toggle ${c.activo?'on':'off'} toggle-activo" title="${c.activo?'Activo':'Inactivo'}"></button></td>
         <td style="display:flex;gap:6px;"><button class="btn btn-small btn-guardar">Guardar</button><button class="btn btn-small btn-danger btn-eliminar">Eliminar</button></td>
@@ -670,16 +683,19 @@ async function cargarClientes(){
         const activo = tr.querySelector('.toggle-activo').classList.contains('on');
         if(!nombre){ showAlert('alertClientes','El nombre no puede quedar vacío.'); return; }
         try{
-          check(await sb.from('clientes').update({ nombre, telefono, direccion, activo, actualizado_en: new Date().toISOString() }).eq('id', id));
+          await api('PATCH', `/clientes/${encodeURIComponent(id)}`, { nombre, telefono, direccion, activo });
           showAlert('alertClientes','Cliente actualizado correctamente.','ok');
-        }catch(e){ showAlert('alertClientes','No se pudo guardar. Verifica que el nombre no esté repetido.'); }
+        }catch(e){
+          showAlert('alertClientes', e.status===409 ? 'Ya existe un cliente con ese nombre.' : 'No se pudo guardar el cliente.');
+        }
       });
       tr.querySelector('.btn-eliminar').addEventListener('click', async ()=>{
-        if(!confirm('¿Eliminar este cliente permanentemente? Su historial de pedidos quedará conservado, pero ya no podrá elegirse en el formulario.')) return;
+        if(!confirm('¿Eliminar este cliente? Quedará como INACTIVO: su historial de pedidos se conserva, pero ya no podrá elegirse en el formulario.')) return;
         try{
-          check(await sb.from('clientes').delete().eq('id', id));
+          await api('DELETE', `/clientes/${encodeURIComponent(id)}`);
+          showAlert('alertClientes','Cliente marcado como inactivo.','ok');
           cargarClientes();
-        }catch(e){ showAlert('alertClientes','No se pudo eliminar el cliente.'); }
+        }catch(e){ showAlert('alertClientes','No se pudo inactivar el cliente.'); }
       });
     });
   }catch(e){ console.error(e); showAlert('alertClientes','No se pudieron cargar los clientes.'); }
@@ -691,11 +707,13 @@ document.getElementById('btnAgregarCli').addEventListener('click', async ()=>{
   const direccion = document.getElementById('nuevoCliDir').value.trim() || null;
   if(!nombre){ showAlert('alertClientes','Escribe el nombre del cliente.'); return; }
   try{
-    check(await sb.from('clientes').insert({ nombre, telefono, direccion }));
+    await api('POST', '/clientes', { nombre, telefono, direccion });
     document.getElementById('nuevoCliNombre').value=''; document.getElementById('nuevoCliTel').value=''; document.getElementById('nuevoCliDir').value='';
     showAlert('alertClientes','Cliente agregado.','ok');
     cargarClientes();
-  }catch(e){ showAlert('alertClientes','No se pudo agregar. ¿Ya existe un cliente con ese nombre?'); }
+  }catch(e){
+    showAlert('alertClientes', e.status===409 ? 'Ya existe un cliente con ese nombre.' : 'No se pudo agregar el cliente.');
+  }
 });
 
 /* ---------------- REPORTES ---------------- */
